@@ -13,11 +13,18 @@ const client = createClient({
   url: `redis://${redisHost}:${redisPort}`,
 });
 
+const host = process.env.MYSQL_HOST ? process.env.MYSQL_HOST : "";
+const user = process.env.MYSQL_USER ? process.env.MYSQL_USER : "";
+const database = process.env.MYSQL_DATABASE ? process.env.MYSQL_DATABASE : "";
+const password = process.env.MYSQL_PASSWD ? process.env.MYSQL_PASSWD : "";
+const mysqlPort = process.env.MYSQL_PORT ? process.env.MYSQL_PORT : "";
+
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'tempuser',
-  database: 'test',
-  password: 'DcS5Gb7Gs2W#',
+  host,
+  user,
+  database,
+  password,
+  port: mysqlPort
 });
 
 app.get('/', (req, res) => {
