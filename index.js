@@ -1,6 +1,7 @@
 import express from "express"
 import { createClient } from "redis"
 import * as mysql from "mysql2"
+import e from "express"
 
 const app = express()
 const port = 3000
@@ -12,7 +13,12 @@ const client = createClient({
   url: `redis://${redisHost}:${redisPort}`,
 });
 
-var connection;
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'tempuser',
+  database: 'test',
+  password: 'DcS5Gb7Gs2W#',
+});
 
 app.get('/', (req, res) => {
   res.send('root')
@@ -25,9 +31,63 @@ app.get('/redis', (req,res) => {
 })
 
 app.get('/mysql', (req,res) => {
+  connection.query('select * from test', (err, result) => {
+    console.log("result:", result)
+  })
   res.send({
     message: "Connected to MySQL"
   })
+})
+
+app.get('/mysql/get/:name', (req,res) => {
+  if (!req.params['name']) {
+    return res.status(400).send({
+      error: "Specify name"
+    })
+  } else {
+    connection.execute('select * from `test` where `name` = ? limit 1', [req.params['name']], (err, result) => {
+      console.log("result:", result)
+      if(err != null || err != undefined) {
+        console.log(err)
+        return res.status(500).send({
+          error: "An error has occured"
+        })
+      } else {
+        if (result.length > 0) {
+          return res.status(200).send({
+            id: result[0]['id'],
+            name: result[0]['name'],
+          })
+        } else {
+          return res.status(404).send({
+            error: 'User not found'
+          })
+        }
+      }
+    })
+  }
+})
+
+app.get('/mysql/set/:name', (req,res) => {
+  if(!req.params['name']) {
+    return res.status(400).send({
+      error: "Specify name"
+    })
+  } else {
+    connection.execute('insert into `test` (name) values (?)', [req.params['name']], (err, result) => {
+      console.log("result:", result)
+      if(err != null || err != undefined) {
+        console.log(err)
+        return res.status(500).send({
+          error: "An error has occured"
+        })
+      }
+      return res.status(200).send({
+        success: "true",
+        insertId: result.insertId,
+      })
+    })
+  }
 })
 
 app.get('/mysql/set/:name', (req,res) => {
